@@ -8,15 +8,15 @@
 
 import UIKit
 
+
 class ViewController: UIViewController {
 
     
-    @IBAction func didSelectReset(_ sender: Any) {
+    @IBAction func didSelectReset(_ sender: Any?) {
         for index in 0..<indexArray.count {
-            print(index)
             indexArray[index] = 0
             if let block = self.view.viewWithTag(index) as? UIButton {
-                block.backgroundColor = .lightGray
+                setColor(color: .yellow, button: block, forPlayer: .empty)
             }
         }
         isUser = true
@@ -51,16 +51,40 @@ class ViewController: UIViewController {
         }
         if let button = sender as? UIButton {
             if isUser {
-                button.backgroundColor = .red
-                self.indexArray[button.tag] = 1
-                isUser = !isUser
-                if indexArray.contains(0) {
-                    playComputer()
+                if(indexArray[button.tag] == 0) {
+                    indexArray[button.tag] = 1
+                    setColor(color: .red, button: button, forPlayer: .user)
+                    isUser = !isUser
+                    
                 }
+                
             }
         }
     }
     
+    func checkForUserWinAndContinue() {
+        let userWin = checkForWinningLines(forPlayer: 1)
+        if userWin {
+            showAlertWith(title: "FInished!", message: "you wone the puzzle")
+            return
+        }
+        if indexArray.contains(0) {
+            playComputer()
+            let computerWin = checkForWinningLines(forPlayer: 2)
+            if computerWin {
+                showAlertWith(title: "FInished!", message: "you lost the puzzle")
+                return
+            }
+            else if !indexArray.contains(0) {
+                showAlertWith(title: "FInished!", message: "No one could win")
+                return
+            }
+        }
+        else if !indexArray.contains(0) {
+            showAlertWith(title: "FInished!", message: "No one could win")
+            return
+        }
+    }
 
     func playComputer() {
         if level == 0 {
@@ -70,59 +94,123 @@ class ViewController: UIViewController {
             playSecondLevel()
         }
         else if level == 2 {
-        
+            playThirdLevel()
         }
         else if level == 3 {
-        
-        }
-
-    }
-    
-    func setBlockSelectedWithTag(tag: Int) {
-    
-        if let block = self.view.viewWithTag(tag) as? UIButton {
-            block.backgroundColor = .green
+            playFourthLevel()
         }
     }
     
+    func setBlockSelectedWithTag(index: Int) {
+        indexArray[index] = 2
+        if let block = self.view.viewWithTag(index) as? UIButton {
+            setColor(color: .gray, button: block, forPlayer: .computer)
+            level += 1
+            isUser = !isUser
+        }
+    }
     
 }
 
 extension ViewController {
     func playFirstLevel() {
         let index = getRandomEmptyBlock()
-        indexArray[index] = 2
-        setBlockSelectedWithTag(tag: index)
-        level += 1
-        isUser = !isUser
+        setBlockSelectedWithTag(index: index)
     }
     
-    func getRandomEmptyBlock() -> Int {
-        var Index = -1
-        while Index == -1 {
-            let diceRoll = Int(arc4random_uniform(9))
-            if (self.indexArray[diceRoll] == 0) {
-                Index = diceRoll
-            }
-        }
-        return Index
-    }
+    
 }
 
 extension ViewController {
     func playSecondLevel() {
-        let index = checkForTwoFilledAndOneEmpty()
-        indexArray[index] = 2
-        setBlockSelectedWithTag(tag: index)
-        level += 1
-        isUser = !isUser
+        var index = checkForTwoFilledUserAndOneEmptyBlock()
+        if index != -1 {
+            setBlockSelectedWithTag(index: index)
+            return
+        }
+        index = checkForOneFilledComputerAndTwoEmptyBlock()
+        if index != -1 {
+            setBlockSelectedWithTag(index: index)
+            return
+        }
+        index = checkForEmptyCenterBlock()
+        if index != -1 {
+            setBlockSelectedWithTag(index: index)
+            return
+        }
+        index = checkForCornerBlock()
+        if index != -1 {
+            setBlockSelectedWithTag(index: index)
+            return
+        }
+    }
+}
+
+extension ViewController {
+    
+    func playThirdLevel() {
+        var index = checkForTwoFilledComputerAndOneEmptyBlock()
+        if index != -1 {
+            setBlockSelectedWithTag(index: index)
+            return
+        }
+        index = checkForTwoFilledUserAndOneEmptyBlock()
+        if index != -1 {
+            setBlockSelectedWithTag(index: index)
+            return
+        }
+        index = checkForEmptyCenterBlock()
+        if index != -1 {
+            setBlockSelectedWithTag(index: index)
+            return
+        }
+        index = checkForCornerBlock()
+        if index != -1 {
+            setBlockSelectedWithTag(index: index)
+            return
+        }
+    }
+
+}
+
+extension ViewController {
+    
+    func playFourthLevel() {
+        var index = checkForTwoFilledComputerAndOneEmptyBlock()
+        if index != -1 {
+            setBlockSelectedWithTag(index: index)
+            return
+        }
+        index = checkForTwoFilledUserAndOneEmptyBlock()
+        if index != -1 {
+            setBlockSelectedWithTag(index: index)
+            return
+        }
+        index = checkForEmptyCenterBlock()
+        if index != -1 {
+            setBlockSelectedWithTag(index: index)
+            return
+        }
+        index = checkForCornerBlock()
+        if index != -1 {
+            setBlockSelectedWithTag(index: index)
+            return
+        }
+        index = checkForSideBlock()
+        if index != -1 {
+            setBlockSelectedWithTag(index: index)
+            return
+        }
     }
     
-    func checkForTwoFilledAndOneEmpty() -> Int {
-    
+}
+
+extension ViewController {
+
+    func getCheckingArray(forPlayer:Int) -> [[Int]] {
         var userSelectedArray: [Int] = []
         for index in 0...8 {
-            if indexArray[index] == 1 {
+            if indexArray[index] == forPlayer {
                 userSelectedArray.append(index)
             }
         }
@@ -141,12 +229,13 @@ extension ViewController {
         for index in 0..<lineContaining.count {
             checkInArray.append(mergedArray[lineContaining[index]])
         }
+        return checkInArray
+    }
+    
+    
+    func checkForTwoFilledUserAndOneEmptyBlock() -> Int {
         
-        print(mergedArray)
-        print(lineContaining)
-        print(checkInArray)
-
-        
+        let checkInArray = getCheckingArray(forPlayer: 1)
         for index in 0..<checkInArray.count {
             var userCount: [Int] = []
             var machineCount: [Int] = []
@@ -166,43 +255,192 @@ extension ViewController {
                     emptyCount.append(checkInArray[index][subIndex])
                 }
             }
-            print("found userCount:\(userCount.count) at \(userCount), machineCount:\(machineCount.count) at \(machineCount), emptyIndex:\(emptyCount.count) at \(emptyCount)")
             
             if emptyCount.count == 1 && userCount.count == 2 {
                 return emptyCount[0]
             }
         }
-        return 1
+        return -1
     }
     
-    func checkInCrossLines() -> Int {
-    
+    func checkForTwoFilledComputerAndOneEmptyBlock() -> Int {
         
-        return 1
-    }
-}
-
-extension ViewController {
-    
-    func playThirdLevel() {
-        level += 1
-        isUser = !isUser
-    }
-
-}
-
-extension ViewController {
-    func uniq<S : Sequence, T : Hashable>(source: S) -> [T] where S.Iterator.Element == T {
-        var buffer = [T]()
-        var added = Set<T>()
-        for elem in source {
-            if !added.contains(elem) {
-                buffer.append(elem)
-                added.insert(elem)
+        let checkInArray = getCheckingArray(forPlayer: 2)
+        for index in 0..<checkInArray.count {
+            var userCount: [Int] = []
+            var machineCount: [Int] = []
+            var emptyCount: [Int] = []
+            
+            for subIndex in 0..<3 {
+                
+                if (indexArray[checkInArray[index][subIndex]] == 1)
+                {
+                    userCount.append(checkInArray[index][subIndex])
+                }
+                else if (indexArray[checkInArray[index][subIndex]] == 2)
+                {
+                    machineCount.append(checkInArray[index][subIndex])
+                }
+                else {
+                    emptyCount.append(checkInArray[index][subIndex])
+                }
+            }
+            if emptyCount.count == 1 && machineCount.count == 2 {
+                return emptyCount[0]
             }
         }
-        return buffer
+        return -1
+    }
+    
+    func checkForOneFilledComputerAndTwoEmptyBlock() -> Int {
+        let checkInArray = getCheckingArray(forPlayer: 2)
+        for index in 0..<checkInArray.count {
+            var userCount: [Int] = []
+            var machineCount: [Int] = []
+            var emptyCount: [Int] = []
+            
+            for subIndex in 0..<3 {
+                
+                if (indexArray[checkInArray[index][subIndex]] == 1)
+                {
+                    userCount.append(checkInArray[index][subIndex])
+                }
+                else if (indexArray[checkInArray[index][subIndex]] == 2)
+                {
+                    machineCount.append(checkInArray[index][subIndex])
+                }
+                else {
+                    emptyCount.append(checkInArray[index][subIndex])
+                }
+            }
+            
+            if emptyCount.count == 2 && machineCount.count == 1 {
+                return emptyCount[0]
+            }
+        }
+        return -1
+    }
+    
+    func checkForWinningLines(forPlayer: Int) -> Bool {
+        let checkInArray = getCheckingArray(forPlayer: forPlayer)
+        for index in 0..<checkInArray.count {
+            var userCount: [Int] = []
+            var machineCount: [Int] = []
+            var emptyCount: [Int] = []
+            
+            for subIndex in 0..<3 {
+                
+                if (indexArray[checkInArray[index][subIndex]] == 1)
+                {
+                    userCount.append(checkInArray[index][subIndex])
+                }
+                else if (indexArray[checkInArray[index][subIndex]] == 2)
+                {
+                    machineCount.append(checkInArray[index][subIndex])
+                }
+                else {
+                    emptyCount.append(checkInArray[index][subIndex])
+                }
+            }
+            
+            if forPlayer == 1 && userCount.count == 3 {
+                return true
+            }
+            
+            if forPlayer == 2 && machineCount.count == 3 {
+                return true
+            }
+            
+        }
+        return false
+    }
+
+    
+    func checkForEmptyCenterBlock() -> Int {
+        if indexArray[ViewController.centerBlock] == 0 {
+            return ViewController.centerBlock
+        }
+        return -1
+    }
+    
+    func getRandomEmptyBlock() -> Int {
+        var Index = -1
+        while Index == -1 {
+            let diceRoll = Int(arc4random_uniform(8))
+            print("diceRoll: \(diceRoll)")
+            if diceRoll != ViewController.centerBlock &&
+                (self.indexArray[diceRoll] == 0) {
+                Index = diceRoll
+                print("random selection: \(Index)")
+            }
+        }
+        return Index
+    }
+
+    
+    func checkForCornerBlock() -> Int {
+        let index = -1
+        for cornerIndex in ViewController.cornerBlocks {
+            if indexArray[cornerIndex] == 0 {
+                return cornerIndex
+            }
+        }
+        return index
+    }
+    
+    func checkForSideBlock() -> Int {
+        let index = -1
+        for sideIndex in ViewController.sideBlocks {
+            if indexArray[sideIndex] == 0 {
+                return sideIndex
+            }
+        }
+        return index
+    }
+    
+    func checkForAnyBlock() -> Int {
+        let emptyIndex = -1
+        for index in indexArray {
+            if indexArray[index] == 0 {
+                return index
+            }
+        }
+        return emptyIndex
     }
 }
 
+
+extension ViewController {
+    enum player {
+        case empty
+        case user
+        case computer
+    }
+    
+    func setColor(color:UIColor, button:UIButton, forPlayer: player) {
+        self.view.isUserInteractionEnabled = false
+        UIView.animate(withDuration: 0.3, animations: { 
+            button.backgroundColor = color
+        }) { (success) in
+            if (success) {
+                self.view.isUserInteractionEnabled = true
+                if forPlayer == .user {
+                    self.checkForUserWinAndContinue()
+                }
+            }
+        }
+    }
+    
+    func showAlertWith(title: String, message: String) {
+        
+        let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        let okAction = UIAlertAction(title: "Replay", style: UIAlertActionStyle.default) {
+            UIAlertAction in
+            self.didSelectReset(nil)
+            NSLog("OK Pressed")
+        }
+        alertController.addAction(okAction)
+        self.present(alertController, animated: true, completion: nil)
+    }
+}
 

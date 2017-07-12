@@ -10,12 +10,30 @@ import UIKit
 
 
 class ViewController: UIViewController {
-
-    
+    //--------------------------------------------------
+    // MARK: Variable Declarations
+    //--------------------------------------------------
     @IBOutlet var boardView: UIView!
-    @IBAction func didSelectReset(_ sender: Any?) {
-        resetGame()
-    }
+    
+    var indexArray: [player]! = []
+    var isUser = true
+    var level = 0
+    
+    let centerBlock = 4
+    let cornerBlocks = [0,2,6,8]
+    let sideBlocks = [1,3,5,7]
+    let crossLines = [[0,4,8],[2,4,6]]
+    let parallelLines = [[0,1,2],[0,3,6],[1,4,7],[2,5,8],[3,4,5],[6,7,8]]
+    
+    let greenColor = UIColor(red: 0.0784, green: 0.7412, blue: 0.6745, alpha: 1.0)
+    let grayColor = UIColor(red: 0.9400, green: 0.9400, blue: 0.9400, alpha: 1.0)
+    let whiteColor = UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
+    
+    
+    
+    //--------------------------------------------------
+    // MARK: Initial Methods
+    //--------------------------------------------------
     
     func resetGame() {
         indexArray.removeAll()
@@ -34,43 +52,12 @@ class ViewController: UIViewController {
         isUser = true
         level = 0
     }
-    var indexArray: [player]! = []
-    var isUser = true
-    var level = 0
     
-    let centerBlock = 4
-    let cornerBlocks = [0,2,6,8]
-    let sideBlocks = [1,3,5,7]
-    let crossLines = [[0,4,8],[2,4,6]]
-    let parallelLines = [[0,1,2],[0,3,6],[1,4,7],[2,5,8],[3,4,5],[6,7,8]]
-
-    let greenColor = UIColor(red: 0.0784, green: 0.7412, blue: 0.6745, alpha: 1.0)
-    let grayColor = UIColor(red: 0.9400, green: 0.9400, blue: 0.9400, alpha: 1.0)
-    let whiteColor = UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
-
     override func viewDidLoad() {
         super.viewDidLoad()
         resetGame()
-        // Do any additional setup after loading the view, typically from a nib.
     }
-
-    @IBAction func didSelectButton(_ sender: Any) {
-        
-        if !indexArray.contains(player.empty) {
-            return
-        }
-        if let button = sender as? UIButton {
-            if isUser {
-                if(indexArray[button.tag] == .empty) {
-                    indexArray[button.tag] = .user
-                    setColor(color: colorFor(player: .user), button: button, forPlayer: .user)
-                    isUser = !isUser
-                    
-                }
-                
-            }
-        }
-    }
+    
     
     func checkForUserWinAndContinue() {
         let userWin = checkForWinningLines(forPlayer: .user)
@@ -93,7 +80,7 @@ class ViewController: UIViewController {
             return
         }
     }
-
+    
     func playComputer() {
         if level == 0 {
             playFirstLevel()
@@ -120,15 +107,50 @@ class ViewController: UIViewController {
     
 }
 
+//--------------------------------------------------
+// MARK: IBAction Methods
+//--------------------------------------------------
+
+
+extension ViewController {
+    
+    @IBAction func didSelectReset(_ sender: Any?) {
+        resetGame()
+    }
+    
+    @IBAction func didSelectButton(_ sender: Any) {
+        
+        if !indexArray.contains(player.empty) {
+            return
+        }
+        if let button = sender as? UIButton {
+            if isUser {
+                if(indexArray[button.tag] == .empty) {
+                    indexArray[button.tag] = .user
+                    setColor(color: colorFor(player: .user), button: button, forPlayer: .user)
+                    isUser = !isUser
+                    
+                }
+            }
+        }
+    }
+    
+}
+
+//--------------------------------------------------
+// MARK: First Level extension block
+//--------------------------------------------------
 extension ViewController {
     func playFirstLevel() {
         let index = getRandomEmptyBlock()
         setBlockSelectedWithTag(index: index)
     }
-    
-    
 }
 
+
+//--------------------------------------------------
+// MARK: Second Level extension block
+//--------------------------------------------------
 extension ViewController {
     func playSecondLevel() {
         var index = checkForTwoFilledUserAndOneEmptyBlock()
@@ -154,6 +176,10 @@ extension ViewController {
     }
 }
 
+
+//--------------------------------------------------
+// MARK: Third Level extension block
+//--------------------------------------------------
 extension ViewController {
     
     func playThirdLevel() {
@@ -178,9 +204,12 @@ extension ViewController {
             return
         }
     }
-
 }
 
+
+//--------------------------------------------------
+// MARK: Fourth Level extension block
+//--------------------------------------------------
 extension ViewController {
     
     func playFourthLevel() {
@@ -210,11 +239,15 @@ extension ViewController {
             return
         }
     }
-    
 }
 
-extension ViewController {
 
+//--------------------------------------------------
+// MARK: Supporting methods extension block
+//--------------------------------------------------
+
+extension ViewController {
+    
     func getCheckingArray(forPlayer:player) -> [[Int]] {
         var userSelectedArray: [Int] = []
         for index in 0...8 {
@@ -240,6 +273,28 @@ extension ViewController {
         return checkInArray
     }
     
+    func getRandomEmptyBlock() -> Int {
+        var Index = -1
+        while Index == -1 {
+            let diceRoll = Int(arc4random_uniform(8))
+            if (self.indexArray[diceRoll] == .empty) {
+                Index = diceRoll
+            }
+        }
+        return Index
+    }
+    
+    func getRandomCornerEmptyBlock() -> Int {
+        var Index = -1
+        while Index == -1 {
+            let diceRoll = Int(arc4random_uniform(3))
+            let cornerIndex = cornerBlocks[diceRoll]
+            if (self.indexArray[cornerIndex] == .empty) {
+                Index = cornerIndex
+            }
+        }
+        return Index
+    }
     
     func checkForTwoFilledUserAndOneEmptyBlock() -> Int {
         
@@ -369,40 +424,15 @@ extension ViewController {
                 
                 return true
             }
-            
         }
         return false
     }
-
     
     func checkForEmptyCenterBlock() -> Int {
         if indexArray[centerBlock] == .empty {
             return centerBlock
         }
         return -1
-    }
-    
-    func getRandomEmptyBlock() -> Int {
-        var Index = -1
-        while Index == -1 {
-            let diceRoll = Int(arc4random_uniform(8))
-            if (self.indexArray[diceRoll] == .empty) {
-                Index = diceRoll
-            }
-        }
-        return Index
-    }
-
-    func getRandomCornerEmptyBlock() -> Int {
-        var Index = -1
-        while Index == -1 {
-            let diceRoll = Int(arc4random_uniform(3))
-            let cornerIndex = cornerBlocks[diceRoll]
-            if (self.indexArray[cornerIndex] == .empty) {
-                Index = cornerIndex
-            }
-        }
-        return Index
     }
     
     func checkForCornerBlock() -> Int {
@@ -427,6 +457,9 @@ extension ViewController {
 }
 
 
+//--------------------------------------------------
+// MARK: Enums and UI related extension block
+//--------------------------------------------------
 extension ViewController {
     enum player {
         case empty
@@ -458,7 +491,7 @@ extension ViewController {
     
     func setColor(color:CGColor, button:UIButton, forPlayer: player) {
         self.boardView.isUserInteractionEnabled = false
-        UIView.animate(withDuration: 0.3, animations: { 
+        UIView.animate(withDuration: 0.3, animations: {
             button.backgroundColor = UIColor(cgColor: color)
             button.setBackgroundImage(self.imageFor(player: forPlayer), for: .normal)
         }) { (success) in
@@ -477,15 +510,11 @@ extension ViewController {
         let okAction = UIAlertAction(title: "Replay", style: UIAlertActionStyle.default) {
             UIAlertAction in
             self.resetGame()
-            NSLog("OK Pressed")
         }
         alertController.addAction(okAction)
         self.present(alertController, animated: true, completion: nil)
     }
-}
-
-extension ViewController {
-
+    
     func drawLine(from: CGPoint, to: CGPoint, color: CGColor) {
         let line = CAShapeLayer()
         let linePath = UIBezierPath()
@@ -499,6 +528,5 @@ extension ViewController {
             line.lineJoin = kCALineJoinRound
         }
     }
-    
 }
 

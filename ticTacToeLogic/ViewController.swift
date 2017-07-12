@@ -54,11 +54,6 @@ class ViewController: UIViewController {
         // Do any additional setup after loading the view, typically from a nib.
     }
 
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
-    }
-
     @IBAction func didSelectButton(_ sender: Any) {
         
         if !indexArray.contains(player.empty) {
@@ -80,14 +75,12 @@ class ViewController: UIViewController {
     func checkForUserWinAndContinue() {
         let userWin = checkForWinningLines(forPlayer: .user)
         if userWin {
-//            showAlertWith(title: "FInished!", message: "you wone the puzzle")
             return
         }
         if indexArray.contains(.empty) {
             playComputer()
             let computerWin = checkForWinningLines(forPlayer: .computer)
             if computerWin {
-//                showAlertWith(title: "FInished!", message: "you lost the puzzle")
                 return
             }
             else if !indexArray.contains(.empty) {
@@ -393,16 +386,24 @@ extension ViewController {
         var Index = -1
         while Index == -1 {
             let diceRoll = Int(arc4random_uniform(8))
-            print("diceRoll: \(diceRoll)")
-            if diceRoll != centerBlock &&
-                (self.indexArray[diceRoll] == .empty) {
+            if (self.indexArray[diceRoll] == .empty) {
                 Index = diceRoll
-                print("random selection: \(Index)")
             }
         }
         return Index
     }
 
+    func getRandomCornerEmptyBlock() -> Int {
+        var Index = -1
+        while Index == -1 {
+            let diceRoll = Int(arc4random_uniform(3))
+            let cornerIndex = cornerBlocks[diceRoll]
+            if (self.indexArray[cornerIndex] == .empty) {
+                Index = cornerIndex
+            }
+        }
+        return Index
+    }
     
     func checkForCornerBlock() -> Int {
         let index = -1
